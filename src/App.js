@@ -1,26 +1,25 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, {Component} from 'react';
+import {Stage, AppConsumer} from '@inlet/react-pixi'
+import Ball from './Ball'
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+const WIDTH = window.innerWidth;
+const HEIGHT = window.innerHeight
+
+class App extends Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <Stage width={WIDTH} height={HEIGHT}>
+        {/* <Ball x={0} y={0} fill={0xFF0000}/> */}
+        <AppConsumer>
+          {app => <Ball x={WIDTH / 2} y={HEIGHT / 2} app={app}/>}
+        </AppConsumer>
+      </Stage>
+    );
+  }
 }
 
 export default App;
