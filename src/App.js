@@ -1,25 +1,32 @@
-import React, {Component} from 'react';
-import {Stage, AppConsumer} from '@inlet/react-pixi'
-import Ball from './Ball'
+import React from 'react';
+import {BrowserRouter as Router, Route, Switch} from 'react-router-dom'
+import * as ROUTES from './components/constants/routes'
+import GameWindow from './components/game/GameWindow'
+import Home from './components/navigation/Home'
+import DataDirectory from './components/data/DataDirectory'
+import DataPage from './components/data/DataPage'
+import NavBar from './components/navigation/NavBar'
+import About from './components/navigation/About'
 
-const WIDTH = window.innerWidth;
-const HEIGHT = window.innerHeight
+const PrimaryRouter = () => (
+  <div>
+    <main>
+      <Switch>
+        <Route exact path = {ROUTES.HOME} component = {Home} />
+        <Route path = {ROUTES.GAME} component = {GameWindow} />
+        <Route exact path = {ROUTES.DATA_HOME} component = {DataDirectory} />
+        <Route path = {ROUTES.DATA_PAGE} component = {DataPage} />
+        <Route path = {ROUTES.ABOUT} component = {About} />
+      </Switch>
+    </main>
+  </div>
+)
 
-class App extends Component {
-  constructor(props) {
-    super(props);
-  }
-
-  render() {
-    return (
-      <Stage width={WIDTH} height={HEIGHT}>
-        {/* <Ball x={0} y={0} fill={0xFF0000}/> */}
-        <AppConsumer>
-          {app => <Ball x={WIDTH / 2} y={HEIGHT / 2} app={app}/>}
-        </AppConsumer>
-      </Stage>
-    );
-  }
-}
+const App = () => (
+  <Router>
+    <NavBar />
+    <PrimaryRouter />
+  </Router>
+)
 
 export default App;
