@@ -7,6 +7,7 @@ import DataDirectory from './components/data/DataDirectory'
 import DataPage from './components/data/DataPage'
 import NavBar from './components/navigation/NavBar'
 import About from './components/navigation/About'
+import DevPage from './components/dev/DevPage'
 
 const PrimaryRouter = () => (
   <div>
@@ -17,6 +18,7 @@ const PrimaryRouter = () => (
         <Route exact path = {ROUTES.DATA_HOME} component = {DataDirectory} />
         <Route path = {ROUTES.DATA_PAGE} component = {DataPage} />
         <Route path = {ROUTES.ABOUT} component = {About} />
+        <Route path = '/dev' component = {DevPage} />
       </Switch>
     </main>
   </div>

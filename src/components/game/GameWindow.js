@@ -35,7 +35,6 @@ class GameWindow extends Component {
 
     render() {
         return (
-            
             <Stage width={WIDTH} height={HEIGHT}>
                 <AppConsumer>
                     {app => <SensoriBall app={app} window_width={WIDTH} window_height={HEIGHT} a = {this.state.a} x = {this.state.x} game_type = {this.props.match.params.game_type} />}

@@ -1,5 +1,6 @@
 import React, {Component} from 'react'
 import {VictoryBar} from 'victory'
+import Plot from 'react-plotly.js'
 
 class DataPage extends Component {
     constructor(props){
@@ -16,54 +17,44 @@ class DataPage extends Component {
     loadData = (key) => {
         var data = JSON.parse(localStorage.getItem(key));
         var asyns = data.asynchronies;
-        var bounces = data.bounce_times;
-        var taps= data.tap_times;
+        var periods = data.period_estimates;
         this.setState({
             asyns: {
                 label: 'Asynchronies',
                 values: asyns
             },
-            bounces: {
-                label: 'Bounce times',
-                values: bounces
-            },
-            taps: {
-                label: 'Tap times',
-                values: taps
+            periods: {
+                label: 'Period Estimates',
+                values: periods
             }
         });
     }
 
-    loadVictoryVizData = (data_key) => {
+    formatData = (data_key) => {
         var data = this.state[data_key].values;
         var formatted = [];
         data.forEach((point, index) => {
             formatted.push({time: index, [data_key]: point});
         })
+        console.log(formatted)
         return formatted;
+    }
+
+    formatPlotlyData = (data_key) => {
+        let x = [];
+        let y = [];
+        this.state[data_key].values.forEach((dataPoint, index) => {
+            x.push(index);
+            y.push(dataPoint);
+        })
+        console.log(y);
+        return [x, y]
     }
 
     render() {
         return(
             <div>
-                <p>Asynchronies</p>
-                <VictoryBar 
-                    data = {this.loadVictoryVizData('asyns')}
-                    x = 'time'
-                    y = 'asyns'
-                />
-                <p>Bounce times</p>
-                <VictoryBar 
-                    data = {this.loadVictoryVizData('bounces')}
-                    x = 'time'
-                    y = 'bounces'
-                />
-                <p>Tap times</p>
-                <VictoryBar 
-                    data = {this.loadVictoryVizData('taps')}
-                    x = 'time'
-                    y = 'taps'
-                />
+                <p>{this.formatPlotlyData('asyns')}</p>
             </div>
         )
     }

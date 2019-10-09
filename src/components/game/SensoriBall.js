@@ -16,8 +16,19 @@ const INIT_STATE = {
     asynchronies: [],
     tap_times: [],
     period_estimates: [],
+    press_index: 0,
+    counter: 0,
+    bounce_counter: 0,
+    IOIs: [],
+    ITIs: [],
 }
 
+//This is so react doesn't break - the count tracker makes sure the state is updated only when the data actually changes (a tap)
+var COUNT_TRACKER = 0;
+
+/**
+ * Sensoriball class, requires a game_type, alpha and beta values (a, x)
+ */
 class SensoriBall extends Component {
     constructor(props) {
         super(props);
@@ -30,9 +41,16 @@ class SensoriBall extends Component {
         const b = x * (1 - a);
 
         const start_time = new Date().getTime();
-        const current_date = new Date().getUTCDate();
+        const current_date = new Date().toDateString();
         const game_type = props.game_type;
-        const localStorageKey = 'Dyn Sys Demo, type: ' + game_type + ': ' + current_date + ' ' + start_time; 
+        const localStorageKey = 'Dyn Sys Demo, type: ' + game_type + ': ' + current_date + ' ' + start_time;
+
+        if(this.props.uploadLocalStorageKey) {
+            this.props.uploadLocalStorageKey(localStorageKey);
+        }
+
+        console.log(start_time);
+        console.log(current_date);
 
         //The state controls the "conditions" of the game and ball placement
         this.state = {
@@ -48,7 +66,7 @@ class SensoriBall extends Component {
             localStorageKey
         }
 
-        document.addEventListener("keydown", this.registerUserPress, false);
+        document.addEventListener("keydown", this.updatePressData, false);
     }
 
     componentDidMount() {
@@ -57,14 +75,27 @@ class SensoriBall extends Component {
     }
 
     componentDidUpdate = () => {
-        const {localStorageKey} = this.state;
-        var {bounce_times, asynchronies, tap_times} = this.state;
-        var data_set = {
-            bounce_times,
-            asynchronies,
-            tap_times
+        const {localStorageKey, counter} = this.state;
+        if(counter !== COUNT_TRACKER) {
+            COUNT_TRACKER++;
+            console.log('updated!')
+            let timestamps = this.state.tap_times;
+            let asyns = this.state.asynchronies;
+            if(timestamps.length !== 0 && asyns.length !== 0) {
+                var data = {
+                    asyncs: this.state.asynchronies,
+                    timestamps: this.state.tap_times,
+                    ITIs: this.state.ITIs,
+                    IOIs: this.state.IOIs
+                };
+        
+                localStorage.setItem(localStorageKey, JSON.stringify(data));
+        
+                if(this.props.updateGraph) {
+                    this.props.updateGraph();
+                }
+            }
         }
-        localStorage.setItem(localStorageKey, JSON.stringify(data_set));
     }
 
     componentWillUnmount() {
@@ -90,68 +121,88 @@ class SensoriBall extends Component {
         return [x, y];
     }
 
-    registerUserPress = (event) => {
+    /**
+     * Registers last press time - if a last tap exists, the new period estimated is calculated using the current press time and the last tap. Otherwise,
+     * The new period is estimated using the starting IOI.
+     */
+    updatePressData = (event) => {
         if(event.keyCode === 32) {
-            event.preventDefault();
-            var {start_time, last_tap} = this.state;
-            var press_time = new Date().getTime() - start_time;
-            this.setState({
-                tap_times: this.state.tap_times.concat(press_time)
-            })
-            if (last_tap) {
-                this.setState({
-                    period_estimate: (0.25 * this.state.period_estimate + 0.75 * (press_time - last_tap) / 1000.0)
-                })
-            } else {
-                this.setState({
-                    period_estimate: this.state.starting_IOI
-                })
-            }
-            this.setState({
-                last_tap: press_time
-            })
-        }
-    }
+            if(!event.repeat) {
+                event.preventDefault();
+                //Calculate the current press time.
+                var {start_time, last_tap, counter} = this.state;
+                counter++;
+                var press_time = new Date().getTime() - start_time;
 
-    getTaskData = () => {
-        var data = {
-            asyncs: this.state.asynchronies,
-            timestamps: this.state.tap_times,
-        };
-
-        return data;
-    }
-
-    updateData = () => {
-        var this_bounce = new Date().getTime() - this.state.start_time;
-        
-        this.setState({
-            bounce_times: this.state.bounce_times.concat(this_bounce)
-        })
-
-        var {last_bounce, tap_times} = this.state;
-
-        if (last_bounce) {
-            if(tap_times.length > 0) {
-                var last_tap = tap_times[tap_times.length - 1];
-                var asyn = 0;
-                if(last_tap - last_bounce < this_bounce - last_tap) {
-                    asyn = last_tap - last_bounce;
+                //Update the tap_times array, the last_tap variable (new press_time), period estimate, and period estimates array.
+                if (last_tap) {
+                    var ITI = press_time - last_tap;
+                    var new_period_estimate = (0.25 * this.state.period_estimate + 0.75 * (press_time - last_tap) / 1000.0)
                     this.setState({
-                        asynchronies: this.state.asynchronies.concat(asyn)
+                        tap_times: this.state.tap_times.concat(press_time),
+                        last_tap: press_time,
+                        period_estimate: new_period_estimate,
+                        period_estimates: this.state.period_estimates.concat(new_period_estimate),
+                        counter,
+                        ITIs: this.state.ITIs.concat(ITI),
                     })
                 } else {
-                    asyn = last_tap - this_bounce;
+                    var ITI = press_time;
                     this.setState({
-                        asynchronies: this.state.asynchronies.concat(asyn)
+                        tap_times: this.state.tap_times.concat(press_time),
+                        period_estimate: this.state.starting_IOI,
+                        period_estimates: this.state.period_estimates.concat(this.state.starting_IOI),
+                        last_tap: press_time,
+                        counter,
+                        ITIs: this.state.ITIs.concat(ITI),
                     })
                 }
             }
         }
+    }
 
-        this.setState({
-            last_bounce: this_bounce
-        });
+    /**
+     * Updates the bounce data whenever the ball bounces - asynchronies are calculated using the last tap and last bounce.
+     */
+    updateBounceData = () => {
+        var this_bounce = new Date().getTime() - this.state.start_time;
+        var {last_bounce, tap_times, bounce_counter, last_tap} = this.state;
+
+        if (last_bounce) {
+            var IOI = this_bounce - last_bounce;
+            if(last_tap) {
+                if (this_bounce - last_tap <= 2500) {
+                    let asyn = 0;
+                    if(last_tap - last_bounce < this_bounce - last_tap) {
+                        asyn = last_tap - last_bounce;
+                        this.setState({
+                            asynchronies: this.state.asynchronies.concat(asyn),
+                            bounce_times: this.state.bounce_times.concat(this_bounce),
+                            last_bounce: this_bounce,
+                            bounce_counter: bounce_counter + 1,
+                            IOIs: this.state.IOIs.concat(IOI),
+                        })
+                    } else {
+                        asyn = last_tap - this_bounce;
+                        this.setState({
+                            asynchronies: this.state.asynchronies.concat(asyn),
+                            bounce_times: this.state.bounce_times.concat(this_bounce),
+                            last_bounce: this_bounce,
+                            bounce_counter: bounce_counter + 1,
+                            IOIs: this.state.IOIs.concat(IOI),
+                        })
+                    }
+                } else {
+                    console.log('TOO LONG')
+                }
+            }
+        } else {
+            this.setState({
+                last_bounce: this_bounce,
+                bounce_counter: bounce_counter + 1,
+                IOIs: this.state.IOIs.concat(this.state.starting_IOI),
+            })
+        } 
     }
 
     IOIUpdate = () => {
@@ -181,15 +232,15 @@ class SensoriBall extends Component {
 
         if(y - 50 < 0) {
             //collision case
-            this.updateData();
+            this.updateBounceData();
             let dt = this.IOIUpdate();
             const min_dt = 0.1;
             const max_dt = 4;
             dt = Math.min(max_dt,Math.max(min_dt,dt));
-            this.setPos(x, 50);
+            this.setPos(x, 90);
             this.setState({
                 velocity: this.state.gravity * dt / 2,
-                tracker: this.state.tracker + 1
+                tracker: this.state.tracker + 1,
             })
         } else {
             //ballistic update

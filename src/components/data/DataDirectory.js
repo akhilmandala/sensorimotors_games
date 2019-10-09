@@ -29,7 +29,7 @@ class DataDirectory extends Component {
                 <List>
                     {key_links}
                 </List>
-                <Button onClick = {this.deleteLocalStorage} />
+                <Button onClick = {this.deleteLocalStorage} content='clear data'/>
             </div>
         )
     }
