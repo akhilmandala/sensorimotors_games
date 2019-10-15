@@ -8,6 +8,7 @@
     "local-storage": "^2.0.0",
     "pixi.js": "^5.1.5",
     "plotly.js": "^1.50.0",
+    "pondjs": "^0.8.10",
     "react": "^16.10.2",
     "react-d3-components": "^0.9.1",
     "react-dom": "^16.10.2",
@@ -15,6 +16,7 @@
     "react-plotly.js": "^2.3.0",
     "react-router-dom": "^5.1.2",
     "react-scripts": "3.2.0",
+    "react-timeseries-charts": "^0.16.1",
     "semantic-ui-react": "^0.88.1",
     "victory": "^33.1.0"
   },

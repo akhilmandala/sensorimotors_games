@@ -3,7 +3,6 @@ import { Stage, AppConsumer } from "@inlet/react-pixi";
 import SensoriBall from "../game/SensoriBall";
 import { Grid } from "semantic-ui-react";
 import Plot from "react-plotly.js";
-import DevPlot from './DevPlot'
 
 class DevPage extends Component {
   constructor(props) {

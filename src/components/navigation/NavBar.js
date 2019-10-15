@@ -31,13 +31,6 @@ class NavBar extends Component {
                             active={activeItem === 'home'}
                             onClick={this.handleClick}
                         />
-                        <Menu.Item
-                            as={Link}
-                            to={ROUTES.DATA_HOME}
-                            name='data'
-                            active={activeItem === 'data'}
-                            onClick={this.handleClick}
-                        />
                         <Dropdown item pointing text = 'Games'>
                         <Dropdown.Menu >
                             <Dropdown.Item as={Link} to='/game/convergence'>Convergence</Dropdown.Item>

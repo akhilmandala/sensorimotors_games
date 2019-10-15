@@ -14,14 +14,21 @@ class DataDirectory extends Component {
     deleteLocalStorage = (e) => {
         e.preventDefault();
         localStorage.clear();
+        this.setState({
+            keys: Object.keys(localStorage)
+        })
     }
 
     render() {
         const {keys} = this.state;
         const key_links = keys.map(key => {
-            return(
-                <List.Item as = {Link} to = {'/data/' + key}>{key}</List.Item>
-            )
+            if(key.substring(0, 3)==='Dyn') {
+                return(
+                    <List.Item as = {Link} to = {'/data/' + key}>{key}</List.Item>
+                )
+            } else {
+                return null
+            }
         })
 
         return(
@@ -29,7 +36,7 @@ class DataDirectory extends Component {
                 <List>
                     {key_links}
                 </List>
-                <Button onClick = {this.deleteLocalStorage} content='clear data'/>
+                <Button onClick = {this.deleteLocalStorage} content='Clear data'/>
             </div>
         )
     }

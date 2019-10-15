@@ -42,13 +42,24 @@ class SensoriBall extends Component {
 
         const start_time = new Date().getTime();
         const current_date = new Date().toDateString();
+        
+        var today = new Date();
+        var seconds = today.getSeconds();
+
+        if(seconds < 10) {
+            seconds = '0' + seconds
+        }
+
+        var keyTime = today.getHours() + ":" + today.getMinutes() + ":" + seconds;
+
         const game_type = props.game_type;
-        const localStorageKey = 'Dyn Sys Demo, type: ' + game_type + ': ' + current_date + ' ' + start_time;
+        const localStorageKey = 'Dyn Sys Demo, type: ' + game_type + ': ' + current_date + ' ' + keyTime;
 
         if(this.props.uploadLocalStorageKey) {
             this.props.uploadLocalStorageKey(localStorageKey);
         }
 
+        console.log(this.props.gameStart)
         console.log(start_time);
         console.log(current_date);
 
@@ -72,6 +83,7 @@ class SensoriBall extends Component {
     componentDidMount() {
         console.log("init");
         this.props.app.ticker.add(this.sensoriTick);
+        this.props.uploadLocalStorageKey(this.state.localStorageKey);
     }
 
     componentDidUpdate = () => {
@@ -81,6 +93,7 @@ class SensoriBall extends Component {
             console.log('updated!')
             let timestamps = this.state.tap_times;
             let asyns = this.state.asynchronies;
+
             if(timestamps.length !== 0 && asyns.length !== 0) {
                 var data = {
                     asyncs: this.state.asynchronies,
@@ -133,10 +146,11 @@ class SensoriBall extends Component {
                 var {start_time, last_tap, counter} = this.state;
                 counter++;
                 var press_time = new Date().getTime() - start_time;
+                let ITI;
 
                 //Update the tap_times array, the last_tap variable (new press_time), period estimate, and period estimates array.
                 if (last_tap) {
-                    var ITI = press_time - last_tap;
+                    ITI = press_time - last_tap;
                     var new_period_estimate = (0.25 * this.state.period_estimate + 0.75 * (press_time - last_tap) / 1000.0)
                     this.setState({
                         tap_times: this.state.tap_times.concat(press_time),
@@ -147,7 +161,7 @@ class SensoriBall extends Component {
                         ITIs: this.state.ITIs.concat(ITI),
                     })
                 } else {
-                    var ITI = press_time;
+                    ITI = press_time;
                     this.setState({
                         tap_times: this.state.tap_times.concat(press_time),
                         period_estimate: this.state.starting_IOI,
@@ -166,7 +180,7 @@ class SensoriBall extends Component {
      */
     updateBounceData = () => {
         var this_bounce = new Date().getTime() - this.state.start_time;
-        var {last_bounce, tap_times, bounce_counter, last_tap} = this.state;
+        var {last_bounce, bounce_counter, last_tap} = this.state;
 
         if (last_bounce) {
             var IOI = this_bounce - last_bounce;
