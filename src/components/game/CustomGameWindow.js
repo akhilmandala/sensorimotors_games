@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Stage, AppConsumer } from "@inlet/react-pixi";
-import SensoriBall from "../game/SensoriBall";
+import SensoriBall from "./SensoriBall";
 import { Grid, Segment, Button, Container } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 import { Slider } from "react-semantic-ui-range";
@@ -53,6 +53,8 @@ class GameWindow extends Component {
     var data = [];
     var yEqualsXLine = [];
     var step = 0.01;
+    var intersection = -1;;
+
     for (let i = 0; i < 1; i += step) {
       data.push({
         x: i,
@@ -62,11 +64,20 @@ class GameWindow extends Component {
         x: i,
         y: i
       });
+
+      if(Math.abs(i - this.gameProgressionFunction(i)) <= 0.05) {
+        intersection = i;
+      }
     }
 
     var x = d3
       .scaleLinear()
-      .domain([0, 1])
+      .domain([
+          0,
+          d3.max(data, function(d){
+              return d.x;
+          })
+        ])
       .range([0, width]);
 
     var y = d3
@@ -74,7 +85,7 @@ class GameWindow extends Component {
       .domain([
         0,
         d3.max(data, function(d) {
-          return +d.y;
+          return d.y;
         })
       ])
       .range([height, 0]);
@@ -94,6 +105,28 @@ class GameWindow extends Component {
       .call(d3.axisBottom(x));
 
     svg.append("g").call(d3.axisLeft(y));
+
+    let data_point = [];
+    if(intersection !== -1) {
+       data_point.push({
+           x: intersection,
+           y: this.gameProgressionFunction(intersection)
+       }) ;
+    } else {
+        data_point.push({
+            x: -1,
+            y: -1
+        })
+    }
+    
+    //Code to add a circle at the intersection point. 
+    // svg
+    //     .append('circle')
+    //     .datum(data_point)
+    //     .attr('r', 10)
+    //     .attr('fill', 'red')
+    //     .attr('cx', function (d) { return d[0].x * width })
+    //     .attr('cy', function (d) { return d[0].y * height })
 
     svg
       .append("path")
@@ -167,8 +200,8 @@ class GameWindow extends Component {
 
     const settingsX = {
       start: 0,
-      min: -2,
-      max: 2,
+      min: -1,
+      max: 1,
       step: 0.001,
       onChange: value => {
         this.setState({
@@ -214,8 +247,10 @@ class GameWindow extends Component {
                   This is a simple game designed to study how humans and
                   machines interact with each other. Your objective is to simple
                   - press the spacebar everytime the ball hits the bottom of the
-                  screen. You are currently playing on the{" "}
-                  {this.state.game_type} setting.
+                  screen. You are currently playing on the custom setting. Here, you
+                  can adjust the parameters of the game yourself. The intersection of the two
+                  lines is the "equilibrium" point that the game should reach. You can adjust
+                  the values below so that the game diverges instead.
                 </p>
 
                 <p>

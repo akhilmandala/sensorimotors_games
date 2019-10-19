@@ -1,5 +1,5 @@
 import React, {Component} from 'react'
-import { List, Button } from 'semantic-ui-react';
+import { List, Button, Segment } from 'semantic-ui-react';
 import {Link} from 'react-router-dom'
 
 class DataDirectory extends Component {
@@ -33,9 +33,11 @@ class DataDirectory extends Component {
 
         return(
             <div>
-                <List>
-                    {key_links}
-                </List>
+                <Segment>
+                    <List>
+                        {key_links.length > 0 ? key_links : <p>You have no data.</p>}
+                    </List>
+                </Segment>
                 <Button onClick = {this.deleteLocalStorage} content='Clear data'/>
             </div>
         )

@@ -1,22 +1,26 @@
 import React from 'react'
-import {List, Grid, Container, Header} from 'semantic-ui-react'
+import {List, Grid, Container, Header, Segment} from 'semantic-ui-react'
 import {Link} from 'react-router-dom'
 import DataList from '../data/DataDirectory'
 
 const GamesList = () => (
-    <List link>
-        <List.Item as = {Link} to='/game/convergence'>Convergence</List.Item>
-        <List.Item as = {Link} to='/game/oscillation'>Oscillation</List.Item>
-        <List.Item as = {Link} to='/game/divergence_a'>Divergence - scenario A</List.Item>
-        <List.Item as = {Link} to='/game/divergence_b'>Divergence - scenario B</List.Item>
-    </List>
+    <Segment>
+        <List link>
+            <List.Header style={{paddingBottom: '1em'}}>Dynamical systems demonstration</List.Header>
+            <List.Item as = {Link} to='/game/convergence'>Convergence</List.Item>
+            <List.Item as = {Link} to='/game/oscillation'>Oscillation</List.Item>
+            <List.Item as = {Link} to='/game/divergence_a'>Divergence - scenario A</List.Item>
+            <List.Item as = {Link} to='/game/divergence_b'>Divergence - scenario B</List.Item>
+            <List.Item as = {Link} to='/custom'>Custom</List.Item>
+        </List>
+    </Segment>
 )
 
 const Home = () => (
     <Container style={{paddingTop:'5em'}}>
-        <Grid columns={2} centered textAlign = 'center'>
+        <Grid columns={1} centered textAlign = 'center'>
             <Grid.Column floated='left'>
-                <Header as='h3'>Game modes</Header>
+                <Header as='h3'>Games</Header>
                 <GamesList />
             </Grid.Column>
             <Grid.Column floated ='right'>

@@ -27,6 +27,10 @@ class GameWindow extends Component {
             a = 2;
             x = 0.5;
         }
+        /**
+         * custom: -2 <= a <= 2
+         * 
+         */
 
         this.state = {
             runGame: true,
@@ -65,48 +69,50 @@ class GameWindow extends Component {
         const {gameStart, key} = this.state;
 
         return (
-            <Grid columns={2}>
-                <Grid.Row>
-                    <Grid.Column>
-                        <Segment>
-                            {gameStart ? (
-                                <Stage width={WIDTH} height={HEIGHT}>
-                                    <AppConsumer>
-                                        {app => <SensoriBall app={app} window_width={WIDTH} window_height={HEIGHT} a = {this.state.a} x = {this.state.x} game_type = {this.props.match.params.game_type} uploadLocalStorageKey={this.handleStorageKey}/>}
-                                    </AppConsumer>
-                                </Stage>
-                            ) : (
-                                <p>You must start the game to begin.</p>
-                            )}
-                        </Segment>
-                    </Grid.Column>
-                    <Grid.Column verticalAlign='middle' textAlign = 'left'>
-                        <Container text>
-                            <p>
-                                This is a simple game designed to study how humans and machines interact
-                                with each other. Your objective is to simple - press the spacebar everytime
-                                the ball hits the bottom of the screen. You are currently playing on the 
-                                {" "} {this.state.game_type} {" "} setting.
-                            </p>
+                <Grid columns={2} style={{padding: '2em'}}>
+                    <Grid.Row>
+                        <Grid.Column verticalAlign='middle' textAlign = 'left' style={{paddingLeft: '1em'}}>
+                            <Segment>
+                                {gameStart ? (
+                                    <Stage width={WIDTH} height={HEIGHT}>
+                                        <AppConsumer>
+                                            {app => <SensoriBall app={app} window_width={WIDTH} window_height={HEIGHT} a = {this.state.a} x = {this.state.x} game_type = {this.props.match.params.game_type} uploadLocalStorageKey={this.handleStorageKey}/>}
+                                        </AppConsumer>
+                                    </Stage>
+                                ) : (
+                                    <p>You must start the game to begin.</p>
+                                )}
+                            </Segment>
+                        </Grid.Column>
+                        <Grid.Column verticalAlign='middle' textAlign = 'left'>
+                            <Segment>
+                                <Container text fluid>
+                                    <p>
+                                        This is a simple game designed to study how humans and machines interact
+                                        with each other. Your objective is to simple - press the spacebar everytime
+                                        the ball hits the bottom of the screen. You are currently playing on the 
+                                        {" "} {this.state.game_type} {" "} setting.
+                                    </p>
 
-                            <p>
-                                You can access the data about your current game from the home page, where
-                                the current game's type, data, and start time will be listed. Your data is
-                                stored locally, and is purely meant as a demonstration of the game's underlying
-                                principles.
-                            </p>
-                            
-                            {key && <p>Game key: {key}</p>}
+                                    <p>
+                                        You can access the data about your current game from the home page, where
+                                        the current game's type, data, and start time will be listed. Your data is
+                                        stored locally, and is purely meant as a demonstration of the game's underlying
+                                        principles.
+                                    </p>
+                                    
+                                    {key && <p>Game key: {key}</p>}
 
-                            {!gameStart ? (
-                                <Button onClick = {this.startGame} content='Start game'/>
-                            ) : (
-                                <Link to = {'/data/' + key}>View data</Link>
-                            )} 
-                        </Container>
-                    </Grid.Column>
-                </Grid.Row>
-            </Grid>
+                                    {!gameStart ? (
+                                        <Button onClick = {this.startGame} content='Start game'/>
+                                    ) : (
+                                        <Link to = {'/data/' + key}>View data</Link>
+                                    )} 
+                                </Container>
+                            </Segment>
+                        </Grid.Column>
+                    </Grid.Row>
+                </Grid>
         )
     }
 }
