@@ -46,7 +46,7 @@ class GameWindow extends Component {
 
   drawFunctionGraph = data => {
     // set the dimensions and margins of the graph
-    var margin = { top: 10, right: 30, bottom: 30, left: 60 };
+    var margin = { top: 10, right: 30, bottom: 50, left: 60 };
     var width = 460 - margin.left - margin.right;
     var height = 400 - margin.top - margin.bottom;
 
@@ -79,7 +79,7 @@ class GameWindow extends Component {
           })
         ])
       .range([0, width]);
-
+    
     var y = d3
       .scaleLinear()
       .domain([
@@ -104,7 +104,20 @@ class GameWindow extends Component {
       .attr("transform", "translate(0," + height + ")")
       .call(d3.axisBottom(x));
 
+    svg.append("text")      // text label for the x axis
+      .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom) + ")")
+      .style("text-anchor", "middle")
+      .text("Inter-onset interval");
+
     svg.append("g").call(d3.axisLeft(y));
+
+    svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 0 - margin.left)
+        .attr("x",0 - (height / 2))
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+        .text("Inter-tap interval");
 
     let data_point = [];
     if(intersection !== -1) {
@@ -266,25 +279,27 @@ class GameWindow extends Component {
                   <React.Fragment>
                     <div ref={this.d3Graph}></div>
 
-                    <p>a = {a.toFixed(2)}</p>
+                    <div style={{paddingTop: '2em'}}>
+                      <p>a = {a.toFixed(2)}</p>
 
-                    <Slider
-                      value={a}
-                      color="yellow"
-                      settings={settingsA}
-                      style={{ padding: "1em 0em 3em 0em" }}
-                    />
+                      <Slider
+                        value={a}
+                        color="yellow"
+                        settings={settingsA}
+                        style={{ padding: "1em 0em 3em 0em" }}
+                      />
 
-                    <p>b = {b.toFixed(2)}</p>
+                      <p>b = {b.toFixed(2)}</p>
 
-                    <Slider
-                      value={b}
-                      color="blue"
-                      settings={settingsX}
-                      style={{ padding: "1em 0em 3em 0em" }}
-                    />
+                      <Slider
+                        value={b}
+                        color="blue"
+                        settings={settingsX}
+                        style={{ padding: "1em 0em 3em 0em" }}
+                      />
 
-                    <Button onClick={this.startGame} content="Start game" />
+                      <Button onClick={this.startGame} content="Start game" />
+                    </div>
                   </React.Fragment>
                 ) : (
                   <Link to={"/data/" + key}>View data</Link>

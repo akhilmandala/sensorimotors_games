@@ -76,7 +76,7 @@ class DataPage extends Component {
                                 <Plot
                                     style={{padding: '0em 0em 0em 1.5em'}}
                                     data={coadaptation_data} 
-                                    layout={ {width: 800, height: 500, title: 'Game progression', xaxis: {title: {text: 'IOI'}}, yaxis: {title: {text: 'ITI'}}} }
+                                    layout={ {width: 800, height: 500, title: 'Game progression', xaxis: {title: {text: 'Inter-onset interval'}}, yaxis: {title: {text: 'Inter-tap interval'}}} }
                                 />
                                 <Checkbox onClick={this.handleTopologicalToggle} label='Toggle a toplogical view'/>
                             </Segment>
