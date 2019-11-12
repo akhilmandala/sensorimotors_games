@@ -240,7 +240,15 @@ class ReferenceTrackingGame extends Component {
               settings={settingsAcceleration}
               style={{ padding: "1em 0em 3em 0em" }}
             />
-            <Plot
+          </Grid.Column>
+        </Grid.Row>
+      </Grid>
+    );
+  }
+}
+
+/**
+ *             <Plot
               data={[
                 {
                   x: this.state.time_stamps,
@@ -252,11 +260,6 @@ class ReferenceTrackingGame extends Component {
               ]}
               layout={{ width: 500, height: 300, title: "Accuracy over time" }}
             />
-          </Grid.Column>
-        </Grid.Row>
-      </Grid>
-    );
-  }
-}
+ */
 
 export default ReferenceTrackingGame;
