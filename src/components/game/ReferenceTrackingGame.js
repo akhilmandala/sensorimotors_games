@@ -1,9 +1,16 @@
 import React, { Component, useEffect } from "react";
 import { Grid } from "semantic-ui-react";
 import { Slider } from "react-semantic-ui-range";
+import Plot from "react-plotly.js";
 
 const WIDTH = window.innerWidth / 2.2;
 const HEIGHT = window.innerHeight - 100;
+
+const MIN_VELOCITY = -1000;
+const MAX_VELOCITY = 1000;
+
+const MIN_ACCELERATION = -1000;
+const MAX_ACCELERATION = 1000;
 
 class ReferenceTrackingGame extends Component {
   constructor(props) {
@@ -35,12 +42,6 @@ class ReferenceTrackingGame extends Component {
     var path = [];
     //initialize reference path
     for (let i = 0; i < HEIGHT; i++) {
-      let reference = 0;
-      for (let j = 0; j < 5; j++) {
-        reference +=
-          reference_amplitudes[j] *
-          Math.sin(reference_phases[j] + (2 * Math.PI * (0)));
-      }
       path[i] = 0;
     }
 
@@ -55,10 +56,13 @@ class ReferenceTrackingGame extends Component {
       disturbance_phases,
       reference_amplitudes,
       reference_phases,
-      path
+      path,
+      time_stamps: [],
+      inaccuracies: [],
+      loggerVariable: 0
     };
 
-    console.log(this.state.path)
+    console.log(this.state.path);
   }
 
   disturbance_function = time => {
@@ -89,7 +93,7 @@ class ReferenceTrackingGame extends Component {
 
   componentDidMount = () => {
     this.interval = setInterval(() => {
-      const {time} = this.state;
+      const { time, loggerVariable } = this.state;
 
       var disturbance = 0;
 
@@ -98,18 +102,44 @@ class ReferenceTrackingGame extends Component {
 
       this.setState(state => {
         var newPath = state.path.slice(1);
-        newPath.push(reference)
+        newPath.push(reference);
+
+        var newX = state.x + 0.01 * state.velocity;
+
+        if (newX < 0) {
+          newX = 0;
+        } else if (newX > WIDTH) {
+          newX = WIDTH;
+        }
+
+        var newVel =
+          state.velocity + 0.01 * (state.acceleration + disturbance);
+        if (newVel < MIN_VELOCITY) {
+          newVel = MIN_VELOCITY;
+        } else if (newVel > MAX_VELOCITY) {
+          newVel = MAX_VELOCITY;
+        }
+
+        var newTimestamps = state.time_stamps.slice(0);
+        var newInaccuracies = state.inaccuracies.slice(0);
+
+        if (loggerVariable % 100 == 0) {
+          newTimestamps.push(time);
+          newInaccuracies.push(state.x - WIDTH / 2 + 100 * this.state.path[Math.floor(this.state.y)]);
+        }
 
         return {
-          x: state.x + 0.01 * state.velocity,
-          velocity: state.velocity + 0.01 * state.acceleration,
-          time: time + 0.001,
+          x: newX,
+          velocity: newVel,
+          time: time + 0.01,
           disturbance,
-          acceleration: state.acceleration + 0.01 * disturbance,
-          path: newPath
-        }
+          path: newPath,
+          loggerVariable: loggerVariable + 1,
+          time_stamps: newTimestamps,
+          inaccuracies: newInaccuracies
+        };
       });
-    }, 1);
+    }, 10);
   };
 
   componentWillUnmount = () => {
@@ -131,8 +161,8 @@ class ReferenceTrackingGame extends Component {
 
     const settingsVelocity = {
       start: this.state.velocity,
-      min: -50,
-      max: 50,
+      min: MIN_VELOCITY,
+      max: MAX_VELOCITY,
       step: 1,
       onChange: value => {
         this.setState({
@@ -143,8 +173,8 @@ class ReferenceTrackingGame extends Component {
 
     const settingsAcceleration = {
       start: this.state.acceleration,
-      min: -15,
-      max: 15,
+      min: MIN_ACCELERATION,
+      max: MAX_ACCELERATION,
       step: 0.1,
       onChange: value => {
         this.setState({
@@ -156,11 +186,15 @@ class ReferenceTrackingGame extends Component {
     var drawn_path = [];
 
     for (let i = 1; i < this.state.path.length - 1; i++) {
-      var x_coord = WIDTH / 2 + (150 * this.state.path[i]);
-      drawn_path += x_coord + "," + (i) + " ";
+      var x_coord = WIDTH / 2 + 100 * this.state.path[i];
+      drawn_path += x_coord + "," + i + " ";
     }
 
-    drawn_path.concat((WIDTH / 2 * this.state.path[this.state.path.length]) + " " + this.state.path.length)
+    drawn_path.concat(
+      (WIDTH / 2) * this.state.path[this.state.path.length] +
+        " " +
+        this.state.path.length
+    );
 
     return (
       <Grid columns={2} style={{ padding: "2em" }}>
@@ -172,7 +206,10 @@ class ReferenceTrackingGame extends Component {
           >
             <p>{this.state.disturbance}</p>
             <svg width={WIDTH} height={HEIGHT}>
-              <polyline points={drawn_path} style={{fill: "none", stroke: "black", strokeWidth: "2"}}/>
+              <polyline
+                points={drawn_path}
+                style={{ fill: "none", stroke: "black", strokeWidth: "2" }}
+              />
               <circle cx={this.state.x} cy={HEIGHT - 100} r={10} fill="red" />
             </svg>
           </Grid.Column>
@@ -202,6 +239,18 @@ class ReferenceTrackingGame extends Component {
               color="blue"
               settings={settingsAcceleration}
               style={{ padding: "1em 0em 3em 0em" }}
+            />
+            <Plot
+              data={[
+                {
+                  x: this.state.time_stamps,
+                  y: this.state.inaccuracies,
+                  type: "scatter",
+                  mode: "lines",
+                  marker: { color: "red" }
+                }
+              ]}
+              layout={{ width: 500, height: 300, title: "Accuracy over time" }}
             />
           </Grid.Column>
         </Grid.Row>

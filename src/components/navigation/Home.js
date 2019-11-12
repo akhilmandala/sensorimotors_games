@@ -12,6 +12,8 @@ const GamesList = () => (
             <List.Item as = {Link} to='/game/divergence_a'>Divergence - scenario A</List.Item>
             <List.Item as = {Link} to='/game/divergence_b'>Divergence - scenario B</List.Item>
             <List.Item as = {Link} to='/custom'>Custom</List.Item>
+            <List.Header style={{paddingBottom: '1em', paddingTop: '1em'}}>Reference Tracking</List.Header>
+            <List.Item as = {Link} to='/tracker'>Base game</List.Item>
         </List>
     </Segment>
 )
