@@ -16,31 +16,35 @@ class ReferenceTrackingGame extends Component {
   constructor(props) {
     super(props);
     this.gameWindow = React.createRef();
+
+    //Divided a set of 0-10 Hz frequencies into 2 sets
     var disturbance_frequencies = [0, 1, 2, 3, 4];
     var reference_frequencues = [5, 6, 7, 8, 9];
 
-    //randomly generate disturbance path function
+    //randomly generate components of the disturbance path function
     var disturbance_amplitudes = disturbance_frequencies.map(frequency => {
       return Math.random();
     });
+
     var disturbance_phases = disturbance_frequencies.map(frequency => {
       var max = Math.PI;
       var min = -1 * Math.PI;
       return Math.random() * (max - min) + min;
     });
 
-    //randomly generate reference path function
+    //randomly generate components of the reference path function
     var reference_amplitudes = reference_frequencues.map(frequency => {
       return Math.random();
     });
+
     var reference_phases = reference_frequencues.map(frequency => {
       var max = Math.PI;
       var min = -1 * Math.PI;
       return Math.random() * (max - min) + min;
     });
 
+    //initialize reference path as a straight line
     var path = [];
-    //initialize reference path
     for (let i = 0; i < HEIGHT; i++) {
       path[i] = 0;
     }
@@ -61,10 +65,14 @@ class ReferenceTrackingGame extends Component {
       inaccuracies: [],
       loggerVariable: 0
     };
-
-    console.log(this.state.path);
   }
 
+  /**
+   * Calculates the disturbance force to be applied to the reference. Assumes that the
+   * amplitudes and phases of the disturbance signal have already been computed.
+   * @param {Number} time The time at which the disturbance is calculated
+   * @returns {Number} The disturbance force
+   */
   disturbance_function = time => {
     const { disturbance_amplitudes, disturbance_phases } = this.state;
     let disturbance = 0;
@@ -76,6 +84,11 @@ class ReferenceTrackingGame extends Component {
     return disturbance;
   };
 
+  /**
+   * Calculates the reference path position given a specific time
+   * @param {Number} time The time at which the reference is calculated
+   * @returns {Number} The reference position - the returned value needs to be scaled
+   */
   reference_function = time => {
     const { reference_amplitudes, reference_phases } = this.state;
     let reference = 0;
@@ -87,10 +100,17 @@ class ReferenceTrackingGame extends Component {
     return reference;
   };
 
+  /**
+   * @deprecated for mouse control
+   */
   _onMouseMove(e) {
     this.setState({ x: e.screenX - 45 });
   }
 
+  /**
+   * Initializes a 10ms interval for calculating and loading the disturbance force and reference point
+   * Every 1s a data point is logged (timestamp, inaccuracy)
+   */
   componentDidMount = () => {
     this.interval = setInterval(() => {
       const { time, loggerVariable } = this.state;
@@ -105,15 +125,15 @@ class ReferenceTrackingGame extends Component {
         newPath.push(reference);
 
         var newX = state.x + 0.01 * state.velocity;
+        var newVel = state.velocity + 0.01 * (state.acceleration + disturbance);
 
+        //If the calculated values are outside of a certain range, then they default to the MIN/MAX values.
         if (newX < 0) {
           newX = 0;
         } else if (newX > WIDTH) {
           newX = WIDTH;
         }
 
-        var newVel =
-          state.velocity + 0.01 * (state.acceleration + disturbance);
         if (newVel < MIN_VELOCITY) {
           newVel = MIN_VELOCITY;
         } else if (newVel > MAX_VELOCITY) {
@@ -125,7 +145,11 @@ class ReferenceTrackingGame extends Component {
 
         if (loggerVariable % 100 == 0) {
           newTimestamps.push(time);
-          newInaccuracies.push(state.x - WIDTH / 2 + 100 * this.state.path[Math.floor(this.state.y)]);
+          newInaccuracies.push(
+            state.x -
+              WIDTH / 2 +
+              100 * this.state.path[Math.floor(this.state.y)]
+          );
         }
 
         return {
@@ -147,6 +171,7 @@ class ReferenceTrackingGame extends Component {
   };
 
   render() {
+    //Settings for the sliders
     const settingsX = {
       start: this.state.x,
       min: 0,
@@ -183,6 +208,7 @@ class ReferenceTrackingGame extends Component {
       }
     };
 
+    //Some processing for the SVG drawing the sin() wave
     var drawn_path = [];
 
     for (let i = 1; i < this.state.path.length - 1; i++) {
@@ -246,6 +272,7 @@ class ReferenceTrackingGame extends Component {
   }
 }
 
+//Plot for the game data - commented out
 /**
  *             <Plot
               data={[
