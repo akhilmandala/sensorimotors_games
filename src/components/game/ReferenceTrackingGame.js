@@ -187,7 +187,7 @@ class ReferenceTrackingGame extends Component {
 
     for (let i = 1; i < this.state.path.length - 1; i++) {
       var x_coord = WIDTH / 2 + 100 * this.state.path[i];
-      drawn_path += x_coord + "," + i + " ";
+      drawn_path += x_coord + "," + (HEIGHT - i) + " ";
     }
 
     drawn_path.concat(
@@ -204,7 +204,6 @@ class ReferenceTrackingGame extends Component {
             textAlign="left"
             style={{ paddingLeft: "1em" }}
           >
-            <p>{this.state.disturbance}</p>
             <svg width={WIDTH} height={HEIGHT}>
               <polyline
                 points={drawn_path}
