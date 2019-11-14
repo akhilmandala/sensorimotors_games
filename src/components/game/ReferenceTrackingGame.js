@@ -1,5 +1,5 @@
 import React, { Component, useEffect } from "react";
-import { Grid } from "semantic-ui-react";
+import { Grid, Menu } from "semantic-ui-react";
 import { Slider } from "react-semantic-ui-range";
 import Plot from "react-plotly.js";
 
@@ -12,42 +12,57 @@ const MAX_VELOCITY = 1000;
 const MIN_ACCELERATION = -1000;
 const MAX_ACCELERATION = 1000;
 
+const FREQUENCIES = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5]
+
 class ReferenceTrackingGame extends Component {
   constructor(props) {
     super(props);
     this.gameWindow = React.createRef();
 
-    //Divided a set of 0-10 Hz frequencies into 2 sets
-    var disturbance_frequencies = [0, 1, 2, 3, 4];
-    var reference_frequencues = [5, 6, 7, 8, 9];
-
     //randomly generate components of the disturbance path function
-    var disturbance_amplitudes = disturbance_frequencies.map(frequency => {
+    var disturbance_amplitudes = [...Array(5).keys()].map(frequency => {
       return Math.random();
     });
 
-    var disturbance_phases = disturbance_frequencies.map(frequency => {
+    var disturbance_phases = [...Array(5).keys()].map(frequency => {
       var max = Math.PI;
       var min = -1 * Math.PI;
       return Math.random() * (max - min) + min;
     });
+
+    var disturbance_frequencies = getRandom(FREQUENCIES, 5);
 
     //randomly generate components of the reference path function
-    var reference_amplitudes = reference_frequencues.map(frequency => {
+    var reference_amplitudes = [...Array(5).keys()].map(frequency => {
       return Math.random();
     });
 
-    var reference_phases = reference_frequencues.map(frequency => {
+    var reference_phases = [...Array(5).keys()].map(frequency => {
       var max = Math.PI;
       var min = -1 * Math.PI;
       return Math.random() * (max - min) + min;
     });
+
+    var reference_frequencies = getRandom(FREQUENCIES, 5);
 
     //initialize reference path as a straight line
     var path = [];
     for (let i = 0; i < HEIGHT; i++) {
       path[i] = 0;
     }
+
+    //generate a key for the game
+    const current_date = new Date().toDateString();
+    
+    var today = new Date();
+    var seconds = today.getSeconds();
+
+    if(seconds < 10) {
+        seconds = '0' + seconds
+    }
+
+    var keyTime = today.getHours() + ":" + today.getMinutes() + ":" + seconds;
+    var game_storage_key = 'ref-tracking-data' + current_date + "-" + keyTime
 
     this.state = {
       x: WIDTH / 2,
@@ -58,12 +73,19 @@ class ReferenceTrackingGame extends Component {
       disturbance: 0,
       disturbance_amplitudes,
       disturbance_phases,
+      disturbance_frequencies,
       reference_amplitudes,
       reference_phases,
+      reference_frequencies,
       path,
       time_stamps: [],
       inaccuracies: [],
-      loggerVariable: 0
+      loggerVariable: 0,
+      activeItem: "slider",
+      disturbances: [],
+      references: [],
+      positions: [],
+      game_storage_key
     };
   }
 
@@ -74,12 +96,12 @@ class ReferenceTrackingGame extends Component {
    * @returns {Number} The disturbance force
    */
   disturbance_function = time => {
-    const { disturbance_amplitudes, disturbance_phases } = this.state;
+    const { disturbance_amplitudes, disturbance_phases, disturbance_frequencies } = this.state;
     let disturbance = 0;
     for (let i = 0; i < 5; i++) {
       disturbance +=
         disturbance_amplitudes[i] *
-        Math.sin(disturbance_phases[i] + 2 * Math.PI * time);
+        Math.sin(disturbance_phases[i] + (2 * Math.PI * time * disturbance_frequencies[i]));
     }
     return disturbance;
   };
@@ -90,12 +112,12 @@ class ReferenceTrackingGame extends Component {
    * @returns {Number} The reference position - the returned value needs to be scaled
    */
   reference_function = time => {
-    const { reference_amplitudes, reference_phases } = this.state;
+    const { reference_amplitudes, reference_phases, reference_frequencies } = this.state;
     let reference = 0;
     for (let i = 0; i < 5; i++) {
       reference +=
         reference_amplitudes[i] *
-        Math.sin(reference_phases[i] + 2 * Math.PI * time);
+        Math.sin(reference_phases[i] + (2 * Math.PI * time * reference_frequencies[i]));
     }
     return reference;
   };
@@ -115,14 +137,16 @@ class ReferenceTrackingGame extends Component {
     this.interval = setInterval(() => {
       const { time, loggerVariable } = this.state;
 
-      var disturbance = 0;
-
-      disturbance = this.disturbance_function(time);
+      var disturbance = this.disturbance_function(time);
       var reference = this.reference_function(time);
 
       this.setState(state => {
         var newPath = state.path.slice(1);
         newPath.push(reference);
+
+        const disturbances = state.disturbances.concat(disturbance)
+        const references = state.references.concat(reference)
+        const positions = state.positions.concat(state.x)
 
         var newX = state.x + 0.01 * state.velocity;
         var newVel = state.velocity + 0.01 * (state.acceleration + disturbance);
@@ -140,12 +164,12 @@ class ReferenceTrackingGame extends Component {
           newVel = MAX_VELOCITY;
         }
 
-        var newTimestamps = state.time_stamps.slice(0);
-        var newInaccuracies = state.inaccuracies.slice(0);
+        var time_stamps = state.time_stamps
+        var inaccuracies = state.inaccuracies
 
         if (loggerVariable % 100 == 0) {
-          newTimestamps.push(time);
-          newInaccuracies.push(
+          time_stamps.concat(time)
+          inaccuracies.concat(
             state.x -
               WIDTH / 2 +
               100 * this.state.path[Math.floor(this.state.y)]
@@ -155,12 +179,15 @@ class ReferenceTrackingGame extends Component {
         return {
           x: newX,
           velocity: newVel,
-          time: time + 0.01,
+          time: time + 0.001,
           disturbance,
           path: newPath,
           loggerVariable: loggerVariable + 1,
-          time_stamps: newTimestamps,
-          inaccuracies: newInaccuracies
+          time_stamps: time_stamps,
+          inaccuracies: inaccuracies,
+          disturbances,
+          references,
+          positions
         };
       });
     }, 10);
@@ -168,9 +195,24 @@ class ReferenceTrackingGame extends Component {
 
   componentWillUnmount = () => {
     clearInterval(this.interval);
+
+    var data = {
+      references: this.state.references,
+      disturbances: this.state.disturbances,
+      timestamps: this.state.time_stamps,
+      inaccuracies: this.state.inaccuracies,
+      positions: this.state.positions
+    }
+
+    console.log(data)
+
+    localStorage.setItem(this.state.game_storage_key, JSON.stringify(data));
   };
 
+  handleItemClick = (e, { name }) => this.setState({ activeItem: name });
+
   render() {
+    const { activeItem } = this.state;
     //Settings for the sliders
     const settingsX = {
       start: this.state.x,
@@ -239,37 +281,82 @@ class ReferenceTrackingGame extends Component {
             </svg>
           </Grid.Column>
           <Grid.Column>
-            <p>0th order control - position</p>
-            <p>{this.state.x}</p>
-            <Slider
-              value={this.state.x}
-              color="yellow"
-              settings={settingsX}
-              style={{ padding: "1em 0em 3em 0em" }}
-            />
+            <Menu>
+              <Menu.Item
+                name="slider"
+                active={activeItem === "slider"}
+                onClick={this.handleItemClick}
+              />
+              <Menu.Item
+                name="cursor"
+                active={activeItem === "cursor"}
+                onClick={this.handleItemClick}
+              />
+              <Menu.Item
+                name="buttons"
+                active={activeItem === "buttons"}
+                onClick={this.handleItemClick}
+              />
+            </Menu>
+            {activeItem === "slider" && (
+              <>
+                <p>0th order control - position</p>
+                <p>{this.state.x}</p>
+                <Slider
+                  value={this.state.x}
+                  color="yellow"
+                  settings={settingsX}
+                  style={{ padding: "1em 0em 3em 0em" }}
+                />
 
-            <p>1st order control - velocity</p>
-            <p>{this.state.velocity}</p>
-            <Slider
-              value={this.state.velocity}
-              color="red"
-              settings={settingsVelocity}
-              style={{ padding: "1em 0em 3em 0em" }}
-            />
+                <p>1st order control - velocity</p>
+                <p>{this.state.velocity}</p>
+                <Slider
+                  value={this.state.velocity}
+                  color="red"
+                  settings={settingsVelocity}
+                  style={{ padding: "1em 0em 3em 0em" }}
+                />
 
-            <p>2nd order control - acceleration</p>
-            <p>{this.state.acceleration}</p>
-            <Slider
-              value={this.state.acceleration}
-              color="blue"
-              settings={settingsAcceleration}
-              style={{ padding: "1em 0em 3em 0em" }}
-            />
+                <p>2nd order control - acceleration</p>
+                <p>{this.state.acceleration}</p>
+                <Slider
+                  value={this.state.acceleration}
+                  color="blue"
+                  settings={settingsAcceleration}
+                  style={{ padding: "1em 0em 3em 0em" }}
+                />
+              </>
+            )}
+            {activeItem === "cursor" && (
+              <>
+                <p>TODO - CURSOR</p>
+              </>
+            )}
+            {activeItem === "buttons" && (
+              <>
+                <p>TODO-BUTTONS</p>
+              </>
+            )}
           </Grid.Column>
         </Grid.Row>
       </Grid>
     );
   }
+}
+
+function getRandom(arr, n) {
+  var result = new Array(n),
+      len = arr.length,
+      taken = new Array(len);
+  if (n > len)
+      throw new RangeError("getRandom: more elements taken than available");
+  while (n--) {
+      var x = Math.floor(Math.random() * len);
+      result[n] = arr[x in taken ? taken[x] : x];
+      taken[x] = --len in taken ? taken[len] : len;
+  }
+  return result;
 }
 
 //Plot for the game data - commented out

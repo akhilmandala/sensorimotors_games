@@ -10,6 +10,7 @@ import About from './components/navigation/About'
 import DevPage from './components/dev/DevPage'
 import CustomGame from './components/game/CustomGameWindow'
 import ReferenceTrackingGame from './components/game/ReferenceTrackingGame';
+import ReferenceGameData from './components/data/ReferenceTrackerData.js'
 
 const PrimaryRouter = () => (
   <div>
@@ -23,6 +24,7 @@ const PrimaryRouter = () => (
         <Route path = {ROUTES.ABOUT} component = {About} />
         <Route path = '/tracker' component = {ReferenceTrackingGame} />
         <Route path = '/dev' component = {DevPage} />
+        <Route path = '/reference-data/:key' component = {ReferenceGameData} />
       </Switch>
     </main>
   </div>
