@@ -1,58 +1,55 @@
-import React, { Component } from 'react'
-import { Link } from 'react-router-dom'
-import { Menu, Dropdown } from 'semantic-ui-react'
-import * as ROUTES from '../constants/routes'
+import React, { Component } from "react";
+import { Link } from "react-router-dom";
+import { Menu, Dropdown, Header } from "semantic-ui-react";
+import * as ROUTES from "../constants/routes";
+import styled from "styled-components";
 
 class NavBar extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            activateItem: null
-        }
-    }
+  constructor(props) {
+    super(props);
+    this.state = {
+      activateItem: null
+    };
+  }
 
-    handleClick = (e, { name }) => {
-        this.setState({
-            activateItem: name
-        })
-    }
+  handleClick = (e, { name }) => {
+    this.setState({
+      activeItem: name
+    });
+  };
 
-    render() {
-        const { activeItem } = this.state;
+  render() {
+    const { activeItem } = this.state;
 
-        return (
-            <div>
-                <Menu pointing secondary>
-                    <Menu.Menu position='left'>
-                        <Menu.Item
-                            as={Link}
-                            to={ROUTES.HOME}
-                            name='home'
-                            active={activeItem === 'home'}
-                            onClick={this.handleClick}
-                        />
-                        <Dropdown item pointing text = 'Games'>
-                        <Dropdown.Menu >
-                            <Dropdown.Item as={Link} to='/game/convergence'>Convergence</Dropdown.Item>
-                            <Dropdown.Item as={Link} to='/game/oscillation'>Oscillation</Dropdown.Item>
-                            <Dropdown.Item as={Link} to='/game/divergence_a'>Divergence - scenario A</Dropdown.Item>
-                            <Dropdown.Item as={Link} to='/game/divergence_b'>Divergence - scenario B</Dropdown.Item>
-                        </Dropdown.Menu>
-                    </Dropdown>
-                    </Menu.Menu>
-                    <Menu.Menu position='right'>
-                        <Menu.Item
-                            as={Link}
-                            to={ROUTES.ABOUT}
-                            name='about'
-                            active={activeItem === 'about'}
-                            onClick={this.handleClick}
-                        ><b>About</b></Menu.Item>
-                    </Menu.Menu>
-                </Menu>
-            </div>
-        )
-    }
+    return (
+      <div>
+        <Menu secondary>
+          <Menu.Item
+            as={Link}
+            to={ROUTES.HOME}
+            name="home"
+            active={activeItem === "home"}
+            onClick={this.handleClick}
+            style={{paddingLeft: '2em', paddingTop: '2em'}}
+          >
+            <Header as="h3">Sensorimotor Games</Header>
+          </Menu.Item>
+          <Menu.Menu position="right">
+            <Menu.Item
+              as={Link}
+              to={ROUTES.ABOUT}
+              name="about"
+              active={activeItem === "about"}
+              onClick={this.handleClick}
+              style={{paddingRight: '2em', paddingTop: '2em'}}
+            >
+              <Header as="h3">About</Header>
+            </Menu.Item>
+          </Menu.Menu>
+        </Menu>
+      </div>
+    );
+  }
 }
 
-export default NavBar
+export default NavBar;

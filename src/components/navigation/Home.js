@@ -1,40 +1,79 @@
-import React from 'react'
-import {List, Grid, Container, Header, Segment} from 'semantic-ui-react'
-import {Link} from 'react-router-dom'
-import DataList from '../data/DataDirectory'
+import React from "react";
+import {
+  List,
+  Grid,
+  Container,
+  Header,
+  Divider,
+  Card,
+  Image
+} from "semantic-ui-react";
+import { Link } from "react-router-dom";
+import DataList from "../data/DataDirectory";
+import reference_tracking from "./pictures/reference_tracking_screenshot.png";
+import dynamical_systems from "./pictures/dynamical_systems_screenshot.png";
+import cost_minimization from "./pictures/cost_minimization_screenshot.png";
 
 const GamesList = () => (
-    <Segment>
-        <List link>
-            <List.Header style={{paddingBottom: '1em'}}>Dynamical systems demonstration</List.Header>
-            <List.Item as = {Link} to='/game/convergence'>Convergence</List.Item>
-            <List.Item as = {Link} to='/game/oscillation'>Oscillation</List.Item>
-            <List.Item as = {Link} to='/game/divergence_a'>Divergence - scenario A</List.Item>
-            <List.Item as = {Link} to='/game/divergence_b'>Divergence - scenario B</List.Item>
-            <List.Item as = {Link} to='/custom'>Custom</List.Item>
-            <List.Header style={{paddingBottom: '1em', paddingTop: '1em'}}>Reference Tracking</List.Header>
-            <List.Item as = {Link} to='/tracker'>Base game</List.Item>
-        </List>
-    </Segment>
-)
+  <List link>
+    <List.Item as={Link} to="/custom">
+      Dynamical systems demonstration
+    </List.Item>
+    <List.Item as={Link} to="/tracker">
+      Reference Tracking
+    </List.Item>
+    <List.Item as={Link} to="/cost-minimization">
+      Cost minimization
+    </List.Item>
+  </List>
+);
+
+const GamesListPretty = () => (
+  <Card.Group itemsPerRow={3}>
+    <Card>
+      <Card.Content>
+        <Image src={dynamical_systems} size="large" />
+        <Card.Header>Dynamical Systems</Card.Header>
+        <Card.Description>Press your spacebar at the same time as the ball bounce.</Card.Description>
+      </Card.Content>
+    </Card>
+    <Card>
+      <Card.Content>
+        <Image src={reference_tracking} size="large" />
+        <Card.Header>Reference Tracking</Card.Header>
+        <Card.Description>Adjust the acceleration of the ball to remain on the path.</Card.Description>
+      </Card.Content>
+    </Card>
+    <Card>
+      <Card.Content>
+        <Image src={cost_minimization} size="large" />
+        <Card.Header>Cost minimization</Card.Header>
+        <Card.Description>Take actions to reduce the tone.</Card.Description>
+      </Card.Content>
+    </Card>
+  </Card.Group>
+);
 
 const Home = () => (
-    <Container style={{paddingTop:'5em'}}>
-        <Grid columns={1} centered textAlign = 'center'>
-            <Grid.Column floated='left'>
-                <Header as='h3'>Games</Header>
-                <GamesList />
-            </Grid.Column>
-            <Grid.Column floated ='right'>
-                <Header as='h3'>Data</Header>
-                <DataList />
-            </Grid.Column>
-        </Grid>
-    </Container>    
-)
+  <Container style={{ paddingTop: "2em" }}>
+    <Grid columns={1} centered textAlign="center" padded="horizontally">
+      <Grid.Column floated="left">
+        <Header as="h4">Games</Header>
+        <Divider />
+        <GamesListPretty />
+      </Grid.Column>
+      <Grid.Column>
+        <Header as="h4" style={{ paddingTop: "2em" }}>
+          Data
+        </Header>
+        <Divider />
+        <DataList />
+      </Grid.Column>
+    </Grid>
+  </Container>
+);
 
 //Data tab
 //Games tab
 
 export default Home;
-

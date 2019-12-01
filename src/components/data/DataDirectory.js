@@ -42,11 +42,9 @@ class DataDirectory extends Component {
 
     return (
       <div>
-        <Segment>
-          <List>
-            {key_links.length > 0 ? key_links : <p>You have no data.</p>}
-          </List>
-        </Segment>
+        <List>
+          {key_links.length > 0 ? key_links : <p>You have no data.</p>}
+        </List>
         <Button onClick={this.deleteLocalStorage} content="Clear data" />
       </div>
     );

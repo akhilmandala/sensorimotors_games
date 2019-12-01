@@ -12,7 +12,23 @@ const MAX_VELOCITY = 1000;
 const MIN_ACCELERATION = -1000;
 const MAX_ACCELERATION = 1000;
 
-const FREQUENCIES = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5]
+const FREQUENCIES = [
+  0.1,
+  0.2,
+  0.3,
+  0.4,
+  0.5,
+  0.6,
+  0.7,
+  0.8,
+  0.9,
+  1.0,
+  1.1,
+  1.2,
+  1.3,
+  1.4,
+  1.5
+];
 
 class ReferenceTrackingGame extends Component {
   constructor(props) {
@@ -20,49 +36,21 @@ class ReferenceTrackingGame extends Component {
     this.gameWindow = React.createRef();
 
     //randomly generate components of the disturbance path function
-    var disturbance_amplitudes = [...Array(5).keys()].map(frequency => {
-      return Math.random();
-    });
-
-    var disturbance_phases = [...Array(5).keys()].map(frequency => {
-      var max = Math.PI;
-      var min = -1 * Math.PI;
-      return Math.random() * (max - min) + min;
-    });
-
+    const [disturbance_amplitudes, disturbance_phases] = this.generate_random_signal(); 
     var disturbance_frequencies = getRandom(FREQUENCIES, 5);
 
     //randomly generate components of the reference path function
-    var reference_amplitudes = [...Array(5).keys()].map(frequency => {
-      return Math.random();
-    });
-
-    var reference_phases = [...Array(5).keys()].map(frequency => {
-      var max = Math.PI;
-      var min = -1 * Math.PI;
-      return Math.random() * (max - min) + min;
-    });
-
+    const [reference_amplitudes, reference_phases] = this.generate_random_signal();
     var reference_frequencies = getRandom(FREQUENCIES, 5);
 
     //initialize reference path as a straight line
     var path = [];
-    for (let i = 0; i < HEIGHT; i++) {
+    for (let i = 0; i < HEIGHT + 200; i++) {
       path[i] = 0;
     }
 
     //generate a key for the game
-    const current_date = new Date().toDateString();
-    
-    var today = new Date();
-    var seconds = today.getSeconds();
-
-    if(seconds < 10) {
-        seconds = '0' + seconds
-    }
-
-    var keyTime = today.getHours() + ":" + today.getMinutes() + ":" + seconds;
-    var game_storage_key = 'ref-tracking-data' + current_date + "-" + keyTime
+    this.key = this.generate_key()
 
     this.state = {
       x: WIDTH / 2,
@@ -85,8 +73,38 @@ class ReferenceTrackingGame extends Component {
       disturbances: [],
       references: [],
       positions: [],
-      game_storage_key
+      offset: 0,
     };
+  }
+
+  generate_key = () => {
+    const current_date = new Date().toDateString();
+
+    var today = new Date();
+    var seconds = today.getSeconds();
+
+    if (seconds < 10) {
+      seconds = "0" + seconds;
+    }
+
+    var keyTime = today.getHours() + ":" + today.getMinutes() + ":" + seconds;
+    var game_storage_key = "ref-tracking-data" + current_date + "-" + keyTime;
+
+    return game_storage_key
+  }
+
+  generate_random_signal = () => {
+    var amplitudes = [...Array(5).keys()].map(frequency => {
+      return Math.random();
+    });
+
+    var phases = [...Array(5).keys()].map(frequency => {
+      var max = Math.PI;
+      var min = -1 * Math.PI;
+      return Math.random() * (max - min) + min;
+    });
+    
+    return [amplitudes, phases]
   }
 
   /**
@@ -96,12 +114,19 @@ class ReferenceTrackingGame extends Component {
    * @returns {Number} The disturbance force
    */
   disturbance_function = time => {
-    const { disturbance_amplitudes, disturbance_phases, disturbance_frequencies } = this.state;
+    const {
+      disturbance_amplitudes,
+      disturbance_phases,
+      disturbance_frequencies
+    } = this.state;
     let disturbance = 0;
     for (let i = 0; i < 5; i++) {
       disturbance +=
         disturbance_amplitudes[i] *
-        Math.sin(disturbance_phases[i] + (2 * Math.PI * time * disturbance_frequencies[i]));
+        Math.sin(
+          disturbance_phases[i] +
+            2 * Math.PI * time * disturbance_frequencies[i]
+        );
     }
     return disturbance;
   };
@@ -112,12 +137,18 @@ class ReferenceTrackingGame extends Component {
    * @returns {Number} The reference position - the returned value needs to be scaled
    */
   reference_function = time => {
-    const { reference_amplitudes, reference_phases, reference_frequencies } = this.state;
+    const {
+      reference_amplitudes,
+      reference_phases,
+      reference_frequencies
+    } = this.state;
     let reference = 0;
     for (let i = 0; i < 5; i++) {
       reference +=
         reference_amplitudes[i] *
-        Math.sin(reference_phases[i] + (2 * Math.PI * time * reference_frequencies[i]));
+        Math.sin(
+          reference_phases[i] + 2 * Math.PI * time * reference_frequencies[i]
+        );
     }
     return reference;
   };
@@ -144,9 +175,15 @@ class ReferenceTrackingGame extends Component {
         var newPath = state.path.slice(1);
         newPath.push(reference);
 
-        const disturbances = state.disturbances.concat(disturbance)
-        const references = state.references.concat(reference)
-        const positions = state.positions.concat(state.x)
+        const disturbances = state.disturbances.concat(disturbance);
+        const references = state.references.concat(reference);
+        const positions = state.positions.concat(state.x);
+        const time_stamps = state.time_stamps.concat(time);
+
+        var path_position = WIDTH / 2 + 100 * state.path[state.y - 200];
+        const offset = state.x - path_position;
+
+        const inaccuracies = state.inaccuracies.concat(offset);
 
         var newX = state.x + 0.01 * state.velocity;
         var newVel = state.velocity + 0.01 * (state.acceleration + disturbance);
@@ -164,18 +201,6 @@ class ReferenceTrackingGame extends Component {
           newVel = MAX_VELOCITY;
         }
 
-        var time_stamps = state.time_stamps
-        var inaccuracies = state.inaccuracies
-
-        if (loggerVariable % 100 == 0) {
-          time_stamps.concat(time)
-          inaccuracies.concat(
-            state.x -
-              WIDTH / 2 +
-              100 * this.state.path[Math.floor(this.state.y)]
-          );
-        }
-
         return {
           x: newX,
           velocity: newVel,
@@ -187,7 +212,8 @@ class ReferenceTrackingGame extends Component {
           inaccuracies: inaccuracies,
           disturbances,
           references,
-          positions
+          positions,
+          offset
         };
       });
     }, 10);
@@ -202,17 +228,15 @@ class ReferenceTrackingGame extends Component {
       timestamps: this.state.time_stamps,
       inaccuracies: this.state.inaccuracies,
       positions: this.state.positions
-    }
+    };
 
-    console.log(data)
-
-    localStorage.setItem(this.state.game_storage_key, JSON.stringify(data));
+    localStorage.setItem(this.key, JSON.stringify(data));
   };
 
   handleItemClick = (e, { name }) => this.setState({ activeItem: name });
 
   render() {
-    const { activeItem } = this.state;
+    const { activeItem, offset } = this.state;
     //Settings for the sliders
     const settingsX = {
       start: this.state.x,
@@ -277,7 +301,7 @@ class ReferenceTrackingGame extends Component {
                 points={drawn_path}
                 style={{ fill: "none", stroke: "black", strokeWidth: "2" }}
               />
-              <circle cx={this.state.x} cy={HEIGHT - 100} r={10} fill="red" />
+              <circle cx={this.state.x} cy={this.state.y} r={10} fill="red" />
             </svg>
           </Grid.Column>
           <Grid.Column>
@@ -347,32 +371,16 @@ class ReferenceTrackingGame extends Component {
 
 function getRandom(arr, n) {
   var result = new Array(n),
-      len = arr.length,
-      taken = new Array(len);
+    len = arr.length,
+    taken = new Array(len);
   if (n > len)
-      throw new RangeError("getRandom: more elements taken than available");
+    throw new RangeError("getRandom: more elements taken than available");
   while (n--) {
-      var x = Math.floor(Math.random() * len);
-      result[n] = arr[x in taken ? taken[x] : x];
-      taken[x] = --len in taken ? taken[len] : len;
+    var x = Math.floor(Math.random() * len);
+    result[n] = arr[x in taken ? taken[x] : x];
+    taken[x] = --len in taken ? taken[len] : len;
   }
   return result;
 }
-
-//Plot for the game data - commented out
-/**
- *             <Plot
-              data={[
-                {
-                  x: this.state.time_stamps,
-                  y: this.state.inaccuracies,
-                  type: "scatter",
-                  mode: "lines",
-                  marker: { color: "red" }
-                }
-              ]}
-              layout={{ width: 500, height: 300, title: "Accuracy over time" }}
-            />
- */
 
 export default ReferenceTrackingGame;

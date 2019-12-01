@@ -11,6 +11,7 @@ import DevPage from './components/dev/DevPage'
 import CustomGame from './components/game/CustomGameWindow'
 import ReferenceTrackingGame from './components/game/ReferenceTrackingGame';
 import ReferenceGameData from './components/data/ReferenceTrackerData.js'
+import CostMinimizationGame from './components/game/CostMinimizationGame';
 
 const PrimaryRouter = () => (
   <div>
@@ -25,6 +26,7 @@ const PrimaryRouter = () => (
         <Route path = '/tracker' component = {ReferenceTrackingGame} />
         <Route path = '/dev' component = {DevPage} />
         <Route path = '/reference-data/:key' component = {ReferenceGameData} />
+        <Route path = '/cost-minimization' component = {CostMinimizationGame} />
       </Switch>
     </main>
   </div>

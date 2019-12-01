@@ -1,33 +1,49 @@
 import React, { Component } from "react";
-import { Grid, Container, Checkbox, Segment } from "semantic-ui-react";
+import { Grid, Container, Button, Segment } from "semantic-ui-react";
 import Plot from "react-plotly.js";
-var ft = require('fourier-transform')
+var ft = require("fourier-transform");
 
 // var fft = require('fft-js').fft
-
 class ReferenceTrackerData extends Component {
   constructor(props) {
     super(props);
     this.state = {
       key: props.match.params.key
     };
+    this.downloadData = React.createRef();
   }
 
   UNSAFE_componentWillMount = () => {
-    var data = localStorage.getItem(this.state.key);
-    data = JSON.parse(data);
-    const { disturbances, inaccuracies, references, timestamps, positions } = data;
-    this.setState({
+    var string_data = localStorage.getItem(this.state.key);
+    var data = JSON.parse(string_data);
+    const {
       disturbances,
       inaccuracies,
       references,
       timestamps,
       positions
+    } = data;
+    this.setState({
+      disturbances,
+      inaccuracies,
+      references,
+      timestamps,
+      positions,
+      string_data
     });
   };
 
+  componentDidMount = () => {
+    var dataStr =
+      "data:text/json;charset=utf-8," +
+      encodeURIComponent(this.state.string_data);
+    var downloadAnchorNode = this.downloadData.current;
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "game_data" + ".json");
+  };
+
   render() {
-    const { disturbances, inaccuracies, references, timestamps, positions } = this.state;
+    const { disturbances, inaccuracies, references, timestamps } = this.state;
     var length = references.length;
     var x_axis = [];
     for (var i = 0; i < length; i++) {
@@ -40,7 +56,7 @@ class ReferenceTrackerData extends Component {
       type: "scatter",
       mode: "lines",
       marker: { color: "red" },
-      name: 'Reference signal'
+      name: "Reference signal"
     };
 
     var disturbance_data = {
@@ -49,12 +65,10 @@ class ReferenceTrackerData extends Component {
       type: "scatter",
       mode: "lines",
       marker: { color: "blue" },
-      name: 'Disturbance signal'
+      name: "Disturbance signal"
     };
 
-    var ref_dist_data = [reference_data,disturbance_data];
-
-    console.log(inaccuracies);
+    var ref_dist_data = [reference_data, disturbance_data];
 
     var inaccuracy_data = [
       {
@@ -66,38 +80,80 @@ class ReferenceTrackerData extends Component {
       }
     ];
 
-    var position_data = [{
-        x: x_axis,
+    var positions = this.state.positions.slice(
+      503,
+      this.state.positions.length - 1
+    );
+
+    var position_data = [
+      {
+        x: x_axis.slice(503, x_axis.length - 1),
         y: positions,
         type: "scatter",
         mode: "lines",
         marker: { color: "purple" }
-    }]
+      }
+    ];
 
-    var min_index = Math.pow(2, Math.floor(Math.log2(positions.length)))
-    
-    var positions_fft = positions.slice(0, min_index)
-    var spectrum = ft(positions_fft)
-    console.log(spectrum)
+    var min_index = Math.pow(2, Math.floor(Math.log2(positions.length)));
+
+    var positions_fft = positions.slice(0, min_index);
+    var position_offset = positions_fft[0];
+
+    var disturbance_fft = disturbances.slice(0, min_index);
+    var references_fft = references.slice(0, min_index);
+
+    positions_fft = positions_fft.map(position => {
+      return position - position_offset;
+    });
+
+    var position_spectrum = ft(positions_fft);
+    var disturbance_spectrum = ft(disturbance_fft);
+    var references_spectrum = ft(references_fft);
 
     var new_axis = [];
-    for(let i = 0; i < min_index; i++) {
-        new_axis[i] = i
+    for (let i = 0; i < min_index; i++) {
+      new_axis[i] = i;
     }
-    console.log(new_axis)
 
-    var fft_data = [{
-        x: new_axis.slice(0, 10),
-        y: spectrum.slice(0, 10),
+    var fft_data = [
+      {
+        x: new_axis,
+        y: position_spectrum,
         type: "scatter",
         mode: "lines",
-        marker: { color: "green" }
-    }]
+        marker: { color: "green" },
+        name: 'position'
+      },
+      {
+        x: new_axis,
+        y: disturbance_spectrum,
+        type: "scatter",
+        mode: "lines",
+        marker: { color: "blue" },
+        name: 'disturbance'
+      },
+      {
+        x: new_axis,
+        y: references_spectrum,
+        type: "scatter",
+        mode: "lines",
+        marker: { color: "red" },
+        name: 'reference'
+      }
+    ];
 
     return (
       <>
         <Container>
           <Grid centered>
+            <Grid.Row>
+              <Segment>
+                <a id="downloadAnchorElem" ref={this.downloadData}>
+                  Download data
+                </a>
+              </Segment>
+            </Grid.Row>
             <Grid.Row>
               <Segment>
                 <Plot
@@ -127,9 +183,17 @@ class ReferenceTrackerData extends Component {
                 <Plot
                   data={fft_data}
                   layout={{
+                    xaxis: {
+                      type: "log",
+                      autorange: true
+                    },
+                    yaxis: {
+                      type: "log",
+                      autorange: true
+                    },
                     width: 1000,
                     height: 700,
-                    title: "Fast fourier transform of position data over time"
+                    title: "Fast fourier transform of position, disturbance, and reference data over time"
                   }}
                 />
               </Segment>
@@ -139,8 +203,8 @@ class ReferenceTrackerData extends Component {
                 <Plot
                   data={inaccuracy_data}
                   layout={{
-                    width: 500,
-                    height: 300,
+                    width: 1000,
+                    height: 700,
                     title: "Inaccuracy over time"
                   }}
                 />
@@ -154,18 +218,3 @@ class ReferenceTrackerData extends Component {
 }
 
 export default ReferenceTrackerData;
-
-/**
- *  *             <Plot
-              data={[
-                {
-                  x: this.state.time_stamps,
-                  y: this.state.inaccuracies,
-                  type: "scatter",
-                  mode: "lines",
-                  marker: { color: "red" }
-                }
-              ]}
-              layout={{ width: 500, height: 300, title: "Accuracy over time" }}
-            />
- */
