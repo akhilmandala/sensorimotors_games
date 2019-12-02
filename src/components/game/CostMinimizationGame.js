@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import Plot from "react-plotly.js";
-import { Grid, Menu, Segment, Container, Header } from "semantic-ui-react";
+import { Grid, Menu, Segment, Container, Header, Button } from "semantic-ui-react";
+
+const UPDATE_CONSTANT = 1.0;
 
 class CostMinimizationGame extends Component {
   constructor(props) {
@@ -24,10 +26,20 @@ class CostMinimizationGame extends Component {
       e: Math.random() * 40 - 20
     };
 
+    //machine_action
+    const machine_action = 300 * Math.random() - 150;
+
+    //current cost
+    const { a, b, c, d, e } = human_parameters;
+    const current_cost = a * Math.pow(0, 2) + b * Math.pow(machine_action, 2) + c * machine_action * 0 + d * 0 + e * machine_action
+
     this.state = {
       human_parameters,
       machine_parameters,
-      activeItem: "human_cost"
+      activeItem: "human_cost",
+      human_action: 0,
+      machine_action,
+      current_cost,
     };
   }
 
@@ -54,28 +66,55 @@ class CostMinimizationGame extends Component {
     return [human_cost, machine_cost];
   };
 
-  human_cost_function = (h, m) => {
+  human_cost_function = (human_action, machine_action) => {
     const { a, b, c, d, e } = this.state.human_parameters;
 
-    return a * Math.pow(h, 2) + b * Math.pow(m, 2) + c * m * h + d * h + e * m;
+    return a * Math.pow(human_action, 2) + b * Math.pow(machine_action, 2) + c * machine_action * human_action + d * human_action + e * machine_action;
   };
 
-  machine_cost_function = (h, m) => {
+  machine_cost_function = (human_action, machine_action) => {
     const { a, b, c, d, e } = this.state.machine_parameters;
 
-    return a * Math.pow(h, 2) + b * Math.pow(m, 2) + c * m * h + d * h + e * m;
+    return a * Math.pow(human_action, 2) + b * Math.pow(machine_action, 2) + c * machine_action * human_action + d * human_action + e * machine_action;
   };
 
   handleClick = (e, { name }) => {
     e.preventDefault();
-    console.log(name);
     this.setState({
       activeItem: name
     });
   };
 
+  update_function = (human_action, machine_action) => {
+    const {b,c,d} = this.state.machine_parameters;
+    const m_new = machine_action - (UPDATE_CONSTANT) * (2*b*machine_action + c*human_action + d);
+    return m_new;
+  }
+
+  incrementUp = () => {
+    var {human_action, machine_action} = this.state;
+    human_action++;
+    machine_action = this.update_function(human_action, machine_action); 
+    this.setState({
+      human_action,
+      machine_action,
+      current_cost: this.human_cost_function(human_action, machine_action)
+    })
+  }
+
+  incrementDown = () => {
+    var {human_action, machine_action} = this.state;
+    human_action--;
+    machine_action = this.update_function(human_action, machine_action); 
+    this.setState({
+      human_action,
+      machine_action,
+      current_cost: this.human_cost_function(human_action, machine_action)
+    })
+  }
+
   render() {
-    const { activeItem } = this.state;
+    const { activeItem, current_cost} = this.state;
 
     const [
       human_cost_values,
@@ -210,6 +249,16 @@ class CostMinimizationGame extends Component {
                 </Container>
               </Segment>
             </Grid.Column>
+          </Grid.Row>
+          <Grid.Row columns={2}>
+              <Grid.Column>
+                <Button onClick={this.incrementUp}>Increment down</Button>
+                <Button onClick={this.incrementDown}>Increment up</Button>
+              </Grid.Column>
+              <Grid.Column>
+                <Header as='h4'>Current cost</Header>
+                <p>{current_cost}</p>
+              </Grid.Column>
           </Grid.Row>
         </Grid>
       </>

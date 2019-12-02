@@ -30,24 +30,24 @@ const GamesList = () => (
 
 const GamesListPretty = () => (
   <Card.Group itemsPerRow={3}>
-    <Card>
+    <Card  as={Link} to='/custom'>
       <Card.Content>
         <Image src={dynamical_systems} size="large" />
-        <Card.Header>Dynamical Systems</Card.Header>
+        <Card.Header style={{paddingTop: '0.5em'}}>Dynamical Systems</Card.Header>
         <Card.Description>Press your spacebar at the same time as the ball bounce.</Card.Description>
       </Card.Content>
     </Card>
-    <Card>
+    <Card as={Link} to='/tracker'>
       <Card.Content>
         <Image src={reference_tracking} size="large" />
-        <Card.Header>Reference Tracking</Card.Header>
+        <Card.Header style={{paddingTop: '0.5em'}}>Reference Tracking</Card.Header>
         <Card.Description>Adjust the acceleration of the ball to remain on the path.</Card.Description>
       </Card.Content>
     </Card>
-    <Card>
+    <Card as={Link} to='/cost-minimization'>
       <Card.Content>
         <Image src={cost_minimization} size="large" />
-        <Card.Header>Cost minimization</Card.Header>
+        <Card.Header style={{paddingTop: '0.5em'}}>Cost minimization</Card.Header>
         <Card.Description>Take actions to reduce the tone.</Card.Description>
       </Card.Content>
     </Card>
