@@ -2,6 +2,9 @@ import React, { Component } from "react";
 import Plot from "react-plotly.js";
 import { Grid, Menu, Segment, Container, Header, Button } from "semantic-ui-react";
 
+var numeric = require('numeric')
+var math = require('mathjs')
+
 const UPDATE_CONSTANT = 1.0;
 
 class CostMinimizationGame extends Component {
@@ -26,24 +29,38 @@ class CostMinimizationGame extends Component {
       e: Math.random() * 40 - 20
     };
 
-    //machine_action
-    const machine_action = 300 * Math.random() - 150;
-
-    //current cost
-    const { a, b, c, d, e } = human_parameters;
-    const current_cost = a * Math.pow(0, 2) + b * Math.pow(machine_action, 2) + c * machine_action * 0 + d * 0 + e * machine_action
+    /**
+     * Initialize human and machine actions:
+     * - Solve for the fixed point of the cost functions by taking the jacobian of the cost functions
+     * - take the jacobian of the first order cost functions (J[Dhfh Dmfm]), evaluate the jacobian at the fixed point
+     */
 
     this.state = {
       human_parameters,
       machine_parameters,
       activeItem: "human_cost",
       human_action: 0,
-      machine_action,
-      current_cost,
     };
   }
 
-  generate_sample_data = () => {
+  componentDidMount = () => {
+    var fixedPoint = this.computeFixedPoint();
+    var [human_cost_values, machine_cost_values] = this.generate_sample_data(fixedPoint);
+    var stability = this.evaluateFixedPointStability(fixedPoint);
+
+    console.log(fixedPoint);
+
+    this.setState({
+      human_cost_values,
+      machine_cost_values,
+      fixedPoint
+    })
+  }
+
+  generate_sample_data = (fixed_point) => {
+    const h_fixed = fixed_point[0];
+    const m_fixed = fixed_point[1];
+
     const human_cost = [];
     const machine_cost = [];
 
@@ -63,8 +80,39 @@ class CostMinimizationGame extends Component {
       machine_cost[h] = machine_cost_datapoint;
     }
 
-    return [human_cost, machine_cost];
+    return [human_cost, machine_cost]
   };
+
+  computeFixedPoint = () => {
+    const {human_parameters, machine_parameters} = this.state;
+
+    const a_h = human_parameters.a;
+    const c_h = human_parameters.c;
+    const d_h = human_parameters.d;
+
+    const b_m = machine_parameters.b;
+    const c_m = machine_parameters.c;
+    const e_m = machine_parameters.e;
+
+    //solve the first order equations
+    var coefficient_matrix = [[2*a_h, c_h],[c_m, 2*b_m]];
+    coefficient_matrix = numeric.inv(coefficient_matrix);
+    var constants = [-1 * d_h, -1 * e_m];
+    var fixed_point = math.multiply(coefficient_matrix, constants);
+
+    return fixed_point;
+  }
+
+  evaluateFixedPointStability = (fixed_point) => {
+    const a_h = this.state.human_parameters.a;
+    const c_h = this.state.human_parameters.c;
+
+    const b_m = this.state.machine_parameters.b;
+    const c_m = this.state.machine_parameters.c;
+
+    const h = fixed_point[0];
+    const m = fixed_point[1];
+  }
 
   human_cost_function = (human_action, machine_action) => {
     const { a, b, c, d, e } = this.state.human_parameters;
@@ -114,12 +162,7 @@ class CostMinimizationGame extends Component {
   }
 
   render() {
-    const { activeItem, current_cost} = this.state;
-
-    const [
-      human_cost_values,
-      machine_cost_values
-    ] = this.generate_sample_data();
+    const { activeItem, current_cost, human_cost_values, machine_cost_values} = this.state;
 
     const human_cost_trace = [
       {
@@ -258,6 +301,8 @@ class CostMinimizationGame extends Component {
               <Grid.Column>
                 <Header as='h4'>Current cost</Header>
                 <p>{current_cost}</p>
+            <p>Human action: {this.state.human_action}</p>
+            <p>Machine action: {this.state.machine_action}</p>
               </Grid.Column>
           </Grid.Row>
         </Grid>
