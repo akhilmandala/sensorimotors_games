@@ -7,7 +7,7 @@
     "d3": "^5.12.0",
     "fourier-transform": "^1.1.2",
     "local-storage": "^2.0.0",
-    "mathjs": "^6.2.5",
+    "mathjs": "^7.5.1",
     "numeric": "^1.2.6",
     "pixi.js": "^5.1.5",
     "plotly.js": "^1.50.0",
